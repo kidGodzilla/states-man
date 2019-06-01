@@ -21,7 +21,7 @@ Secret keys can be used to read/write data in the data store. These can be marke
 ## Installation
 
 ```
-npm i -s states-man
+npm i -s @kidgodzilla/statesman
 ```
 
 (remember the dash!)
@@ -31,7 +31,7 @@ npm i -s states-man
 ### Include Statesman in your project
 
 ```
-const { gett, sett } = require('states-man');
+const { gett, sett } = require('@kidgodzilla/statesman');
 ```
 
 ### Creating a simple setter
