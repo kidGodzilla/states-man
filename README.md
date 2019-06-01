@@ -20,10 +20,106 @@ Secret keys can be used to read/write data in the data store. These can be marke
 
 ## Installation
 
-`npm i -s states-man` 
+```
+npm i -s states-man
+```
+
 (remember the dash!)
 
 ## Usage
 
+### Include Statesman in your project
+
+```
+const { gett, sett } = require('states-man');
+```
+
+### Creating a simple setter
+
+This example takes an object (in `req.body`), and adds or updates the corresponding object in the Mongo collection `states`. The unique key is `id` and will be auto-generated if not included.
+
+```
+app.post('/', sett({
+    connectionString: 'mongodb://your-connection-string',
+    collection: 'states',
+    uniqueKey: 'id'
+}));
+```
+
+A request to this endpoint returns:
+
+```
+{
+    uniqueKey: "id",
+    value: "j4t09j34klj3lkjsdsdf",
+    updated: true,
+}
+```
+
+Value is auto-generated if it doesn't already exist. A document is stored in the `states` collection with `id` = `j4t09j34klj3lkjsdsdf`, which you can later use to find your state document (next example).
 
 
+### Creating a simple Getter
+
+This example lets you query the states collection by `id`, `key`, `email`, and `domain`. 
+
+Example: `http://localhost:3000/?id=j4t09j34klj3lkjsdsdf` or `http://localhost:3000/?domain=example.com&email=foo@example.com`
+
+```
+app.get('/', gett({
+    connectionString: 'mongodb://your-connection-string',
+    collection: 'states',
+    filters: ['id', 'key', 'email', 'domain']
+}));
+```
+
+## Advanced usage
+
+### A full-featured setter
+
+```
+app.post('/', sett({
+    connectionString: 'mongodb://your-connection-string',
+    collection: 'states',
+    uniqueKey: 'id',
+    requiredFields: ['userKey'],
+    forbiddenFields: ['_id'],
+    overwrite: false,
+    beforeQuery: function (req, res, next) { next() },
+    validate: function (req, res) { return true },
+    modifyStates: function (req, res, next) {
+        req.body.ts = + new Date(); // Add a timestamp
+        next()
+    }
+}));
+```
+
+### A full-featured getter
+
+```
+app.get('/', gett({
+    connectionString: 'mongodb://your-connection-string',
+    collection: 'states',
+    filters: ['id', 'key', 'email', 'domain'],
+    hiddenFields: ['_id'],
+    allowedFields: ['id', 'key', 'email', 'domain', 'name', 'title', 'value'],
+    beforeQuery: function (req, res, next) {
+        if (!req.query.allData) req.conf.hiddenFields.push('analytics', 'uptime');
+        next();
+    },
+    modifyItem: function (item, req) {
+        item.requestTimestamp = + new Date();
+        return item;
+    }
+}));
+```
+
+
+## Todos
+
+ * Protect _id by default (forbiddenFields should include _id by default)
+ * Throw an error if you attempt to use _id as your unique key
+ * Document advanced usage
+ 
+ 
+ 
