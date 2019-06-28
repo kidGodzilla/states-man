@@ -137,7 +137,11 @@ function getItems (req, res, next) {
  * Execute any modifyItem middleware on each item before returning a collection response
  */
 function modifyItems (req, res, next) {
-    if (req.gett_data && req.conf.modifyItem) req.gett_data.map(item => { return req.conf.modifyItem(item, req) });
+    if (req.gett_data && req.conf.modifyItem) {
+        req.gett_data.forEach((item, index) => {
+            req.gett_data[index] = req.conf.modifyItem(item, req);
+        });
+    }
     next();
 }
 
@@ -214,13 +218,21 @@ function persistUpdate (req, res, next) {
         }
 
         // Write to Mongo
-        collection.findOneAndUpdate(req.sett_query, req.newState, { upsert: true }).then(() => {
+        collection.findOneAndUpdate(req.sett_query, req.newState, { upsert: true }).then((updatedDoc) => {
+
+            req.updatedDoc = updatedDoc;
 
             req.sett_response.value = req.body[req.conf.uniqueKey];
             req.sett_response.uniqueKey = req.conf.uniqueKey;
             req.sett_response.updated = true;
 
-            if (!res.headersSent) res.json(req.sett_response);
+            if (!req.conf.after) req.conf.after = function (req, res, next) { next() };
+
+            req.conf.after(req, res, () => {
+
+                if (!res.headersSent) res.json(req.sett_response);
+
+            });
         });
     });
 }
