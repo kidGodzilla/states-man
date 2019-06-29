@@ -1,10 +1,9 @@
 {
   "name": "@kidgodzilla/statesman",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Manages state in a generic way, with limited capacity to query and persist state to a server.",
   "main": "index.js",
   "scripts": {
-    "publish": "npm publish --access=public",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
