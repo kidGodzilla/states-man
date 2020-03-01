@@ -218,7 +218,7 @@ function persistUpdate (req, res, next) {
         }
 
         // Write to Mongo
-        collection.findOneAndUpdate(req.sett_query, req.newState, { upsert: true }).then((updatedDoc) => {
+        collection.findOneAndUpdate(req.sett_query, { $set: req.newState }, { upsert: true }).then((updatedDoc) => {
 
             req.updatedDoc = updatedDoc;
 
