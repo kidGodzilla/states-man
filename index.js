@@ -217,6 +217,9 @@ function persistUpdate (req, res, next) {
             return;
         }
 
+        // Delete _id
+        delete req.newState._id;
+
         // Write to Mongo
         collection.findOneAndUpdate(req.sett_query, { $set: req.newState }, { upsert: true }).then((updatedDoc) => {
 
