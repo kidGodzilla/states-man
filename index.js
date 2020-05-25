@@ -42,6 +42,9 @@ function writeFileToB2 (filename, data, conf, cb) {
                 cb(e, 'error');
             });
         });
+    }).catch(e => {
+        console.log(e);
+        return next();
     });
 }
 
@@ -127,6 +130,9 @@ function getItems (req, res, next) {
         collection.find(req.gett_query, req.gett_opts).then(data => {
             req.gett_data = data;
             return next();
+        }).catch(e => {
+            console.log(e);
+            return next();
         });
 
     } catch (e) { console.log(e); next() }
@@ -180,7 +186,10 @@ function getPreviousState (req, res, next) {
     collection.findOne(req.sett_query).then(data => {
         req.previousState = data || {};
         next();
-    });
+    }).catch(e => {
+        console.log(e);
+        return next();
+    })
 }
 
 /**
@@ -236,6 +245,9 @@ function persistUpdate (req, res, next) {
                 if (!res.headersSent) res.json(req.sett_response);
 
             });
+        }).catch(e => {
+            console.log(e);
+            return next();
         });
     });
 }
