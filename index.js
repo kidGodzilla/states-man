@@ -2,8 +2,9 @@ const { isBuffer } = require('mr365-utils');
 const B2 = require('backblaze-b2');
 const monk = require('monk');
 const md5 = require('md5');
-let connections = {};
-let collections = {};
+
+global._statesman_connections = {};
+global._statesman_collections = {};
 
 
 // Todo: consider moving b2 plugin to a seperate module in future version
@@ -128,15 +129,15 @@ function makeQuery (req, res, next) {
 function connect (req) {
     let hash = md5(req.conf.connectionString);
     let hash2 = md5(req.conf.collection);
-    var collection;
+    let collection;
 
     // Attempt to retrieve a stashed collection or connection
-    if (connections[hash]) {
-        if (collections[hash+hash2]) {
-            collection = collections[hash+hash2];
+    if (_statesman_connections[hash]) {
+        if (_statesman_collections[hash+hash2]) {
+            collection = _statesman_collections[hash+hash2];
 
         } else {
-            let db = connections[hash];
+            let db = _statesman_connections[hash];
             collection = db.get(req.conf.collection);
         }
 
@@ -151,8 +152,8 @@ function connect (req) {
             collection = db.get(req.conf.collection);
         });
 
-        collections[hash+hash2] = collection;
-        connections[hash] = db;
+        _statesman_collections[hash+hash2] = collection;
+        _statesman_connections[hash] = db;
     }
 
     return collection;
@@ -166,17 +167,6 @@ function getItems (req, res, next) {
 
     try {
         let collection = connect(req);
-
-        // let hash = md5(req.conf.connectionString);
-        //
-        // let db = monk(req.conf.connectionString);
-        // let collection = monk(req.conf.connectionString).get(req.conf.collection);
-        //
-        // db.on('timeout', () => {
-        //     console.log('Mongo connection lost. Reconnecting..');
-        //     db = monk(req.conf.connectionString);
-        //     collection = db.get(req.conf.collection);
-        // });
 
         collection.find(req.gett_query, req.gett_opts).then(data => {
             req.gett_data = data;
@@ -231,15 +221,6 @@ function requireKey (req, res, next) {
 function getPreviousState (req, res, next) {
     if (!req.conf.uniqueKey || !req.conf.connectionString || !req.conf.collection) return next();
 
-    // let db = monk(req.conf.connectionString);
-    // let collection = db.get(req.conf.collection);
-    //
-    // db.on('timeout', () => {
-    //     console.log('Mongo connection lost. Reconnecting..');
-    //     db = monk(req.conf.connectionString);
-    //     collection = db.get(req.conf.collection);
-    // });
-
     let collection = connect(req);
 
     req.sett_query = {};
@@ -278,15 +259,6 @@ function mergeStates (req, res, next) {
  */
 function persistUpdate (req, res, next) {
     if (!req.newState || !req.conf.connectionString || !req.conf.collection) return next();
-
-    // let db = monk(req.conf.connectionString);
-    // let collection = db.get(req.conf.collection);
-    //
-    // db.on('timeout', () => {
-    //     console.log('Mongo connection lost. Reconnecting..');
-    //     db = monk(req.conf.connectionString);
-    //     collection = db.get(req.conf.collection);
-    // });
 
     let collection = connect(req);
 
@@ -339,7 +311,7 @@ function persistUpdate (req, res, next) {
 function gett (conf) {
     return function (req, res, next) {
         if (!conf.beforeQuery) conf.beforeQuery = function (req, res, next) { next() };
-        req.conf = conf;
+        req.conf = conf || {};
 
         conf.beforeQuery(req, res, () => {
             makeQuery(req, res, () => { getItems(req, res, () => { modifyItems(req, res, () => { returnItems(req, res, next) }) }) });
