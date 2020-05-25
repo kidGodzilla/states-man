@@ -1,6 +1,6 @@
 {
   "name": "@kidgodzilla/statesman",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "Manages state in a generic way, with limited capacity to query and persist state to a server.",
   "main": "index.js",
   "scripts": {
